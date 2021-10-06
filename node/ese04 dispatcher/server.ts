@@ -12,6 +12,13 @@ console.log("Server in ascolto sulla porta " + port);
 // Registrazione dei servizi
 dispatcher.addListener("POST", "/api/servizio1", function (req, res) {
     res.writeHead(200, HEADERS.json);
-    res.write(JSON.stringify({ "ris": "ok" }));
+    let nome = req["BODY"].nome;
+    res.write(JSON.stringify({ "ris": nome, "id": req["GET"].id }));
+    res.end();
+});
+dispatcher.addListener("GET", "/api/servizio2", function (req, res) {
+    res.writeHead(200, HEADERS.json);
+    let nome = req["GET"].nome;
+    res.write(JSON.stringify({ "ris": nome }));
     res.end();
 });

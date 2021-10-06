@@ -2,6 +2,8 @@ import * as _http from "http";
 import * as _url from "url";
 import * as _fs from "fs";
 import * as _mime from "mime";
+import * as _querystring from "query-string";
+
 let HEADERS = require("./headers.json");
 let paginaErrore: string;
 
@@ -31,15 +33,51 @@ class Dispatcher {
             throw new Error("Metodo non valido");
         }
     }
-
     dispatch(req, res) {
+        let metodo = req.method.toUpperCase();
+        if (metodo == "GET") {
+            this.innerDispatch(req, res);
+        }
+        else {
+            let parametriBody: string = "";
+            // Richiamata ogni volta che arrivano dei dati dall'HTTP request
+            req.on("data", function (data) {
+                parametriBody += data;
+            })
+            let parametriJson = {}
+            // Salvo il puntatore alla classe con una variabile
+            let _this = this;
+            req.on("end", function () {
+                // Parsifico i parametri
+                try {
+                    // se i parametri sono in formato JSON il try va a buon fine
+                    // altrimenti sono in formato url-encoded
+                    parametriJson = JSON.parse(parametriBody)
+                } catch (error) {
+                    parametriJson = _querystring.parse(parametriBody);
+                } finally {
+                    // il chiamante potrà prendere i parametri all'interno di BODY
+                    req["BODY"] = parametriJson;
+                    _this.innerDispatch(req, res);
+                }
+            })
+        }
+    }
+    innerDispatch(req, res) {
         // Lettura di metodo, risorsa e parametri
         let metodo = req.method;
         let url = _url.parse(req.url, true);
         let risorsa = url.pathname;
         let parametri = url.query;
 
-        console.log(`${this.prompt}${metodo}:${risorsa}${JSON.stringify(parametri)}`);
+        // Per prendere i parametri
+        req["GET"] = parametri;
+
+        console.log(`${this.prompt} ${metodo} : ${risorsa} ${JSON.stringify(parametri)}`);
+        if (req["BODY"]) {
+            console.log(`${JSON.stringify(req["BODY"])}`);
+        }
+
         if (risorsa.startsWith("/api/")) {
             if (risorsa in this.listeners[metodo]) {
                 let _callback = this.listeners[metodo][risorsa];
@@ -57,6 +95,7 @@ class Dispatcher {
         }
     }
 }
+
 function staticListener(req, res, risorsa) {
     if (risorsa == "/") {
         risorsa = "/index.html";
@@ -64,7 +103,7 @@ function staticListener(req, res, risorsa) {
     let fileName = "./static" + risorsa;
     _fs.readFile(fileName, function (err, data) {
         if (!err) {
-            let header ={"Content-Type":_mime.getType(fileName)};
+            let header = { "Content-Type": _mime.getType(fileName) };
             res.writeHead(200, header);
             res.write(data);
             res.end();
@@ -77,6 +116,7 @@ function staticListener(req, res, risorsa) {
         }
     })
 }
+
 function init() {
     _fs.readFile("./static/error.html", function (err, data) {
         if (!err) {
@@ -86,4 +126,5 @@ function init() {
         }
     });
 }
+
 module.exports = new Dispatcher();
