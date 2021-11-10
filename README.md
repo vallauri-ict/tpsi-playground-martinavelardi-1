@@ -6,3 +6,4 @@ Repository in cui verranno caricati tutti gli esercizi di tecnologie svolti dura
 
 ## Argomenti svolti
 * Node.js
+* MongoDB
