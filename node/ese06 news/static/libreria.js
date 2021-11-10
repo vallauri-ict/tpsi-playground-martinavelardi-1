@@ -17,6 +17,8 @@ function inviaRichiesta(method, url, parameters = {}) {
     });
 }
 
+
+
 function errore(jqXHR, testStatus, strError) {
     if (jqXHR.status == 0)
         alert("Connection refused or Server timeout");
