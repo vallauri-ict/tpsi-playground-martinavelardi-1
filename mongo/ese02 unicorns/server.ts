@@ -4,7 +4,7 @@ const mongoClient = _mongodb.MongoClient
 // Per lavorare in locale:
 // const CONNECTIONSTRING = "mongodb://127.0.0.1:27017";
 // Per lavorare su Atlas (stringa di connessione di nodejs):
-const CONNECTIONSTRING="mongodb+srv://admin:admin03@cluster0.duawc.mongodb.net/5B?retryWrites=true&w=majority";
+const CONNECTIONSTRING="";
 const DBNAME = "5B";
 const DBCOLLECTION = "unicorns";
 
