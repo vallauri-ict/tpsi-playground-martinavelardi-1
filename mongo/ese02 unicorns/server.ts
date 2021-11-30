@@ -1,11 +1,12 @@
 import * as _http from "http";
-import HEADERS from "./headers.json"
-import { Dispatcher } from "./dispatcher"
 import * as _mongodb from "mongodb"
 const mongoClient = _mongodb.MongoClient
-const CONNECTIONSTRING = "mongodb://127.0.0.1:27017";
+// Per lavorare in locale:
+// const CONNECTIONSTRING = "mongodb://127.0.0.1:27017";
+// Per lavorare su Atlas (stringa di connessione di nodejs):
+const CONNECTIONSTRING="mongodb+srv://admin:admin03@cluster0.duawc.mongodb.net/5B?retryWrites=true&w=majority";
 const DBNAME = "5B";
-const DBCOLLECTION = "Unicorns";
+const DBCOLLECTION = "unicorns";
 
 // Query 1 
 mongoClient.connect(CONNECTIONSTRING, (err, client) => {
