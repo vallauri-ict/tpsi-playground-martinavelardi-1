@@ -1,18 +1,31 @@
-$(document).ready(function() {
+$(document).ready(() => {
 
-    $("#btnInvia").on("click", function() {
-        let request = inviaRichiesta("post", "/api/servizio1?id=5", {"nome":"pippo"});
+    $("#btnInvia").on("click", () => {
+        let request = inviaRichiesta("get", "/api/servizio1", { "nome": "Aurora" });
         request.fail(errore);
-        request.done(function(data) {
+        request.done(function (data) {
             alert(JSON.stringify(data));
         });
     });
 
-    $("#btnInvia2").on("click", function() {
-        let request = inviaRichiesta("get", "/api/servizio2", {"nome":"pluto"});
+    $("#btnInvia2").on("click", () => {
+        let request = inviaRichiesta("patch", "/api/servizio2", { "nome": "Unico", "vampires": 3 });
         request.fail(errore);
-        request.done(function(data) {
-            alert(JSON.stringify(data));
+        request.done(function (data) {
+            if (data.modifiedCount > 0) {
+                alert("Aggiornamento eseguito correttamente");
+            } else {
+                alert("Nessuna corrispondenza trovata");
+            }
         });
     });
+
+    $("#btnInvia3").on("click", () => {
+        let request = inviaRichiesta("get", "/api/servizio3/m/brown");
+        request.fail(errore);
+        request.done(function (data) {
+            console.log(JSON.stringify(data));
+        });
+    });
+
 });
