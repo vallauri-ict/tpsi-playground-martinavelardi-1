@@ -1,6 +1,6 @@
-# 💻 TPSI-PLAYGROUND 💻
+# :computer: TPSI-PLAYGROUND :computer:
 
-:woman_technologist: __Velardi Martina__
+:woman_technologist: __Stud: Velardi Martina__
 
 :school: __IIS Vallauri, 5B inf__
 
