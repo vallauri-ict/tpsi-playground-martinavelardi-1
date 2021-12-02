@@ -1,6 +1,8 @@
-# 💻 Ese01 - createServer 💻
+# :books: Ese01 - createServer :books:
 
-👩🏻‍💻 __Velardi Martina 5^B informatica__
+:woman_technologist: __Stud: Velardi Martina__
+
+:school: __IIS Vallauri, 5B inf__
 
 Primo esercizio svolto con l'utilizzo di Node.js. 
 Viene realizzato un web server che restituisca al client una pagina HTML contenente tre informazioni: la risorsa richiesta, i parametri passati e il metodo di chiamata.

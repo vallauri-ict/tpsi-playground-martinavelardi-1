@@ -1,3 +1,5 @@
-# 💻 Ese01 - introduzione 💻
+# :books: Ese01 - introduzione :books:
 
-👩🏻‍💻 __Velardi Martina 5^B informatica__
+:woman_technologist: __Stud: Velardi Martina__
+
+:school: __IIS Vallauri, 5B inf__

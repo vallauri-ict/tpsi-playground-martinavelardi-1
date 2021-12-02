@@ -1,4 +1,5 @@
-# 💻 Ese03 - creazione di un modulo 💻
+# :books: Ese03 - creazione di un modulo :books:
 
-👩🏻‍💻 __Velardi Martina 5^B informatica__
+:woman_technologist: __Stud: Velardi Martina__
 
+:school: __IIS Vallauri, 5B inf__

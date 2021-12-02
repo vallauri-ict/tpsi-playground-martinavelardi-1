@@ -1,8 +1,5 @@
-# 💻 Ese04 - dispatcher 💻
+# :books: Ese04 - dispatcher :books:
 
-👩🏻‍💻 __Velardi Martina 5^B informatica__
+:woman_technologist: __Stud: Velardi Martina__
 
-Repository in cui verranno caricati tutti gli esercizi di tecnologie svolti durante l'anno scolastico 2021/2022.
-
-## Argomenti svolti
-* Node.js
+:school: __IIS Vallauri, 5B inf__
