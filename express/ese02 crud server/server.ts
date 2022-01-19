@@ -1,171 +1,233 @@
-import _express from "express";
-import * as http from "http";
+import express from "express";
 import * as fs from "fs";
+import * as http from "http";
 import * as body_parser from "body-parser";
+import { inherits } from "util";
+import HEADERS from "./headers.json";
+import * as mongodb from "mongodb";
+import cors from "cors";
 
-// Mongo
-import * as _mongodb from "mongodb"
-const mongoClient = _mongodb.MongoClient
-const CONNECTIONSTRING = "mongodb+srv://admin:admin03@cluster0.duawc.mongodb.net/5B?retryWrites=true&w=majority";
-const DBNAME = "5B";
+const mongoClient = mongodb.MongoClient;
+const CONNECTION_STRING = process.env.MONGODB_URI || "mongodb://admin:admin@cluster0-shard-00-00.zarz7.mongodb.net:27017,cluster0-shard-00-01.zarz7.mongodb.net:27017,cluster0-shard-00-02.zarz7.mongodb.net:27017/test?replicaSet=atlas-bgntwo-shard-0&ssl=true&authSource=admin"
+//const CONNECTION_STRING = "mongodb://admin:admin@cluster0-shard-00-00.zarz7.mongodb.net:27017,cluster0-shard-00-01.zarz7.mongodb.net:27017,cluster0-shard-00-02.zarz7.mongodb.net:27017/test?replicaSet=atlas-bgntwo-shard-0&ssl=true&authSource=admin";
+const DB_NAME = "recipeBook";
 
-let port: number = 1337;
-let app = _express();   // = funzione di callback, richiamata ogni volta che arriva una richiesta
+
+let port: number = parseInt(process.env.PORT) || 1337;
+let app = express();
 
 let server = http.createServer(app);
 
-server.listen(port, () => {
-    console.log("Server in ascolto sulla porta " + port);
-    init();
+server.listen(port, function () {
+  console.log("Server in ascolto sulla porta " + port)
+
+  init();
 });
+const whitelist = ["http://localhost:4200", "https://localhost:1337", "https://martinavelardi-crud-server.herokuapp.com/"];
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin)
+      return callback(null, true);
+    if (whitelist.indexOf(origin) === -1) {
+      var msg = 'The CORS policy for this site does not ' +
+        'allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    else
+      return callback(null, true);
+  },
+  credentials: true
+};
+app.use("/", cors(corsOptions));
+
 
 let paginaErrore = "";
 function init() {
-    fs.readFile("./static/error.html", (err, data) => {
-        if (!err) {
-            paginaErrore = data.toString();
-        } else {
-            paginaErrore = "<h2>Risorsa non trovata<h2>";
-        }
-    })
+  fs.readFile("./static/error.html", function (err, data) {
+    if (!err) {
+      paginaErrore = data.toString();
+    }
+    else {
+      paginaErrore = "<h2>Risorsa non trovata</h2>";
+    }
+  });
 }
 
 
-
-// *************************************************************
-// Elenco delle route (listener) di tipo middleware
-// 1. Metodo di ascolto
-// 2. Callback da eseguire in corrispondenza della richiesta
-// *************************************************************
-
-// 1. Log
-app.use("/", (req, res, next) => {
-    console.log(`--> ${req.method}: ${req.originalUrl}`);
-    next();
-})
-
-// 2. Static route
-app.use("/", _express.static("./static"))   // Passa la cartella
-
-// 3. Lettura parametri post
-app.use("/", body_parser.json())
-app.use("/", body_parser.urlencoded({ "extended": true }))
-
-// 4. Log parametri
-app.use("/", (req, res, next) => {
-    if (Object.keys(req.query).length > 0) {
-        console.log(`Parametri GET: `, req.query)
-    }
-    if (Object.keys(req.query).length > 0) {
-        console.log(`Paramentri BODY: `, req.query)
-    }
-    next();
-})
-
-
-
-// *************************************************************
-// Elenco delle routes di risposta al client
-// *************************************************************
-
-// Middleware di apertura della connessione
-app.use("/", (req, res, next) => {
-    // Apro la connessione e gestisco l'errore. NON risponde al client.
-    // next() --> il controllo viene passato alla route successiva che risponde al client
-    mongoClient.connect(CONNECTIONSTRING, (err, client) => {
-        if (err) {
-            res.status(503).send("Errore di connessione al database");
-        } else {
-            console.log("Connessione ok");
-            req["client"] = client;
-            next();
-        }
-    })
-})
-
-// Lettura delle collezioni presenti nel db
-app.get("/api/getCollections", (req, res, next) => {
-    let db = req["client"].db(DBNAME) as _mongodb.Db;
-    let request = db.listCollections().toArray();
-    request.then((data) => {
-        res.send(data);
-    })
-    request.catch((err) => {
-        res.status(503).send("Errore nella sintassi della query");
-    })
-    request.finally(() => {
-        req["client"].close();
-    })
-})
-
-// Middleware di intercettazione dei parametri
-let currentCollection = "";
-let id = "";
-// :id? => id diventa un campo facoltativo
-app.use("/api/:collection/:id?", (req, res, next) => {
-    currentCollection = req.params.collection;
-    id = req.params.id;
-    next();
-})
-/*
-app.use("/api/:collection/:id", (req, res, next) => {
-    id = req.params.id;
-    next();
-})
-*/
-
-
-// Listener specifici
-// Listener GET
-app.patch("/api/*", (req, res, next) => {
-    let db = req["client"].db("unicorns") as _mongodb.Db;
-    let collection = db.collection(currentCollection);
-    if (!id) {
-        let request = collection.find().toArray();
-        request.then((data) => {
-            res.send(data);
-        });
-        request.catch((err) => {
-            res.status(503).send("Errore nella sintassi della query");
-        });
-        request.finally(() => {
-            req["client"].close();
-        });
-    } else {
-        let oId = new _mongodb.ObjectId(id);
-        let request = collection.find({ "_id": oId }).toArray();
-        request.then((data) => {
-            res.send(data);
-        });
-        request.catch((err) => {
-            res.status(503).send("Errore nella sintassi della query");
-        });
-        request.finally(() => {
-            req["client"].close();
-        });
-    }
-})
-
-
-// *************************************************************
-// Default route e route di gestione degli errori
-// Parte se nessuna delle altre ha risposto.
-// L'utente ha chiesto una risorsa che non esiste.
-// *************************************************************
-app.use("/", (req, res, next) => {
-    res.status(404);
-    if (req.originalUrl.startsWith("/api/")) {
-        res.send("Servizio non trovato");
-    } else {
-        res.send(paginaErrore);
-    }
-})
-
-
-
-// *************************************************************
-// Route gestione degli errori
-// *************************************************************
-app.use((err, req, res, next) => {
-    console.log(`Errore codice server ${err.message}`)
+//****************************************************************
+//elenco delle routes di tipo middleware
+//****************************************************************
+// 1.log 
+app.use("/", function (req, res, next) {
+  console.log("---->" + req.method + ":" + req.originalUrl);
+  next();
 });
+
+// 2.static route
+//il next lo fa automaticamente quando non trova la risorsa
+app.use("/", express.static("./static"));
+
+// 3.route lettura parametri post
+app.use("/", body_parser.json());
+app.use("/", body_parser.urlencoded({ "extended": true }));
+
+// 4.log parametri
+app.use("/", function (req, res, next) {
+  if (Object.keys(req.query).length > 0) {
+    console.log("Parametri GET: ", req.query);
+  }
+  if (Object.keys(req.body).length > 0) {
+    console.log("Parametri BODY: ", req.body);
+  }
+  next();
+})
+
+
+//****************************************************************
+//elenco delle routes di risposta al client
+//****************************************************************
+// middleware di apertura della connessione
+app.use("/", (req, res, next) => {
+  mongoClient.connect(CONNECTION_STRING, (err, client) => {
+    if (err) {
+      res.status(503).send("Db connection error");
+    } else {
+      console.log("Connection made");
+      req["client"] = client;
+      next();
+    }
+  });
+});
+
+//lettura delle collezioni presenti nel db
+app.get("/api/getCollections", (req, res, next) => {
+  let db = req["client"].db(DB_NAME) as mongodb.Db;
+  let request = db.listCollections().toArray();
+  request.then((data) => {
+    res.send(data);
+  });
+  request.catch((err) => {
+    res.status(503).send("Sintax error in the query");
+  });
+  request.finally(() => {
+    req["client"].close();
+  });
+});
+
+//middleware di intercettazione dei parametri
+let currentCollection = "";
+let id = ""
+//:id? diventa un campo facoltativo
+app.use("/api/:collection/:id?", (req, res, next) => {
+  currentCollection = req.params.collection;
+  id = req.params.id;
+  next();
+})
+
+// listener specifici: 
+//listener GET
+app.get("/api/*", (req, res, next) => {
+  let db = req["client"].db(DB_NAME) as mongodb.Db;
+  let collection = db.collection(currentCollection);
+  if (!id) {
+    let request = collection.find(req["query"]).toArray();
+    request.then((data) => {
+      res.send(data);
+    });
+    request.catch((err) => {
+      res.status(503).send("Sintax error in the query");
+    });
+    request.finally(() => {
+      req["client"].close();
+    });
+  }
+  else {
+    let oid = new mongodb.ObjectId(id);
+    let request = collection.findOne({ "_id": oid });
+    request.then((data) => {
+      res.send(data);
+    });
+    request.catch((err) => {
+      res.status(503).send("Sintax error in the query");
+    });
+    request.finally(() => {
+      req["client"].close();
+    });
+  }
+
+  app.post("/api/*", (req, res, next) => {
+    let db = req["client"].db(DB_NAME) as mongodb.Db;
+    let collection = db.collection(currentCollection);
+    let request = collection.insertOne(req["body"]);
+    request.then((data) => {
+      res.send(data);
+    });
+    request.catch((err) => {
+      res.status(503).send("Sintax error in the query");
+    });
+    request.finally(() => {
+      req["client"].close();
+    });
+  })
+
+  app.delete("/api/*", (req, res, next) => {
+    let db = req["client"].db(DB_NAME) as mongodb.Db;
+    let collection = db.collection(currentCollection);
+    let _id = new mongodb.ObjectId(id);
+    let request = collection.deleteOne({ "_id": _id });
+    request.then((data) => {
+      res.send(data);
+    });
+    request.catch((err) => {
+      res.status(503).send("Sintax error in the query");
+    });
+    request.finally(() => {
+      req["client"].close();
+    });
+  })
+
+  app.patch("/api/*", (req, res, next) => {
+    let db = req["client"].db(DB_NAME) as mongodb.Db;
+    let collection = db.collection(currentCollection);
+    let _id = new mongodb.ObjectId(id);
+    let request = collection.updateOne({ "_id": _id }, { "$set": req["body"] });
+    request.then((data) => {
+      res.send(data);
+    });
+    request.catch((err) => {
+      res.status(503).send("Sintax error in the query");
+    });
+    request.finally(() => {
+      req["client"].close();
+    });
+  })
+
+  app.put("/api/*", (req, res, next) => {
+    let db = req["client"].db(DB_NAME) as mongodb.Db;
+    let collection = db.collection(currentCollection);
+    let _id = new mongodb.ObjectId(id);
+    let request = collection.replaceOne({ "_id": _id }, req["body"]);
+    request.then((data) => {
+      res.send(data);
+    });
+    request.catch((err) => {
+      res.status(503).send("Sintax error in the query");
+    });
+    request.finally(() => {
+      req["client"].close();
+    });
+  })
+
+
+});
+
+
+//****************************************************************
+//default route(risorse non trovate) e route di gestione degli errori
+//****************************************************************
+app.use("/", function (err, req, res, next) {
+  console.log("***************  ERRORE CODICE SERVER ", err.message, "  *****************");
+})
+
+
+
