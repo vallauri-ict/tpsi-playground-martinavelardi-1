@@ -23,6 +23,7 @@ server.listen(port, function () {
 
   init();
 });
+/*
 const whitelist = ["https://martinavelardi-crud-server.herokuapp.com/", "http://martinavelardi-crud-server.herokuapp.com/", "https://localhost:1337", "http://localhost:4200"];
 const corsOptions = {
   origin: function (origin, callback) {
@@ -39,7 +40,7 @@ const corsOptions = {
   credentials: true
 };
 app.use("/", cors(corsOptions));
-
+*/
 
 let paginaErrore = "";
 function init() {
@@ -226,7 +227,7 @@ app.get("/api/*", (req, res, next) => {
 //default route(risorse non trovate) e route di gestione degli errori
 //****************************************************************
 app.use("/", function (err, req, res, next) {
-  console.log("***************  ERRORE CODICE SERVER ", err.message, "  *****************");
+  console.log("***************  ERRORE CODICE SERVER ", err.stack, "  *****************");
 })
 
 
